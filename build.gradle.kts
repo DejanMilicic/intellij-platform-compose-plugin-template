@@ -31,6 +31,8 @@ repositories {
 }
 
 dependencies {
+    testImplementation("org.jetbrains.skiko:skiko-awt-runtime-windows-x64:0.9.21")
+
     testImplementation(libs.junit)
     testImplementation(libs.opentest4j)
     testImplementation(libs.hamcrest)
