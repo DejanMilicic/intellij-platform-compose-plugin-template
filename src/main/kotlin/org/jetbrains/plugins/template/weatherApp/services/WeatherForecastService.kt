@@ -1,34 +1,42 @@
 package org.jetbrains.plugins.template.weatherApp.services
 
-import com.intellij.openapi.components.Service
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.plugins.template.weatherApp.model.*
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
-@Service
-class WeatherForecastService(private val cs: CoroutineScope) {
-    private val _weatherForecast: MutableStateFlow<WeatherForecastData> = MutableStateFlow(WeatherForecastData.EMPTY)
 
-    val weatherForecast: StateFlow<WeatherForecastData> = _weatherForecast.asStateFlow()
+interface WeatherForecastServiceApi {
+    /**
+     * Suspending function that returns Result<WeatherForecastData>.
+     * This allows callers to handle success/failure explicitly.
+     *
+     * @param location The location to get weather data for
+     * @return Result containing WeatherForecastData on success or exception on failure
+     */
+    suspend fun loadWeatherForecastFor(location: Location): Result<WeatherForecastData>
+}
 
-    fun loadWeatherForecastFor(location: Location) {
-        cs.launch(Dispatchers.IO) {
-            // TODO Cache data
-            emit(getWeatherData(location))
+class WeatherForecastService(
+    private val networkCoroutineContext: CoroutineContext = Dispatchers.IO,
+) : WeatherForecastServiceApi {
+
+    /**
+     * Function that returns a weather forecast for provided [location] param.
+     *
+     * @param location The location to get weather data for
+     * @return Result containing WeatherForecastData on success or exception on failure
+     */
+    override suspend fun loadWeatherForecastFor(location: Location): Result<WeatherForecastData> {
+        return withContext(networkCoroutineContext) {
+            runCatching { getWeatherData(location) }
         }
-    }
-
-    private fun emit(weatherData: WeatherForecastData) {
-        _weatherForecast.value = weatherData
     }
 
     /**
@@ -38,10 +46,14 @@ class WeatherForecastService(private val cs: CoroutineScope) {
     private suspend fun getWeatherData(location: Location): WeatherForecastData {
         val currentTime = LocalDateTime.of(LocalDate.now(), getRandomTime())
 
+        yield() // Check cancellation
+
         // Generate 7-day forecast data
         val dailyForecasts = generateDailyForecasts(currentTime)
 
-        delay(100)
+        // Simulates a network request and stops the execution in case the coroutine
+        // that launched the getWeatherData task is canceled
+        delay(3000)
 
         return WeatherForecastData(
             location = location,
