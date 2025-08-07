@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.*
 
 @Composable
 fun ChatAppSample() {
@@ -18,6 +18,10 @@ fun ChatAppSample() {
             .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Not yet implemented.", style = JewelTheme.defaultTextStyle)
+        //Text("Not yet implemented.", style = JewelTheme.defaultTextStyle)
+
+        OutlinedButton(onClick = { println("Button clicked!") }) {
+            Text("Click Me")
+        }
     }
 }
